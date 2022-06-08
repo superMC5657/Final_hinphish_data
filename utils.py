@@ -5,6 +5,8 @@ import numpy as np
 import os
 import pickle
 import random
+
+import pandas as pd
 import torch
 
 from dgl.data.utils import download, get_download_dir, _get_dgl_url
@@ -104,7 +106,7 @@ sampling_configure = {
 def setup(args):
     args.update(default_configure)
     set_random_seed(args['seed'])
-    args['dataset'] = 'ACMRaw' if args['hetero'] else 'ACM'
+    # args['dataset'] = 'ACMRaw' if args['hetero'] else 'ACM'
     args['device'] = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     args['log_dir'] = setup_log_dir(args)
     return args
@@ -228,7 +230,44 @@ def load_acm_raw(remove_self_loop):
 
 
 def load_url(remove_self_loop):
-    pass
+    assert not remove_self_loop
+    # url_id_path = "data/phishing/phishing_id.csv"
+    url_id_path = "data/phishing/phishing_merge_url.csv"
+    url_alink_url_path = "data/phishing/phishing_a-domain_new.csv"
+    url_ip_url_path = "data/phishing/phishing_ip_new.csv"
+    url_feature = "data/phishing/phishing_url_feature_new.csv"
+
+    url_id = pd.read_csv(url_id_path).values.tolist()
+    url_alink_url = pd.read_csv(url_alink_url_path)
+    url_ip_url = pd.read_csv(url_ip_url_path)
+    url_feature = pd.read_csv(url_feature)
+
+
+def load_label_url(label):
+    # map
+    url_ip_path = f"data/{label}/{label}_merge_url.csv"
+
+    # graph
+    url_alink_url_path = f"data/{label}/{label}_a-domain_new.csv"
+    url_ip_url_path = f"data/{label}/{label}_ip_new.csv"
+
+    # feature
+    url_feature_path = f"data/{label}/{label}_feature_new.csv"
+
+    # to pd
+    url_ip = pd.read_csv(url_ip_path)
+    url_alink_url = pd.read_csv(url_alink_url_path)
+    url_ip_url = pd.read_csv(url_ip_url_path)
+    url_feature = pd.read_csv(url_feature_path)
+
+    return url_ip, url_alink_url, url_ip_url, url_feature
+
+    # url to token
+
+    # get hetero edge
+    # type alink, ip
+    # build hg
+    # split train val test
 
 
 def load_data(dataset, remove_self_loop=False):

@@ -99,6 +99,8 @@ if __name__ == '__main__':
                         help='Random seed')
     parser.add_argument('-ld', '--log-dir', type=str, default='results',
                         help='Dir for saving training results')
+    parser.add_argument('-d', '--dataset', type=str, default='ACM',
+                        help='Dataset which model learned')
     parser.add_argument('--hetero', action='store_true',
                         help='Use metapath coalescing with DGL\'s own dataset')
     args = parser.parse_args().__dict__
