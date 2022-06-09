@@ -13,9 +13,9 @@ def main():
     data[f'{prefix}_a-domain'] = data[f'{prefix}_a-domain'].map(
         lambda x: list(
             map(lambda y: y,
-                x.replace("www.", "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(','))))
+                x.replace('\"', "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(','))))
 
-    index_set = set(index.to_list())
+    index_set = set()
     for i in range(len(data)):
         for element in data.iloc[i][f'{prefix}_a-domain']:
             index_set.add(element)
@@ -23,8 +23,8 @@ def main():
     pd.DataFrame(index_list).to_csv(id_csv, index=False, header=False)
 
 
-id_csv = phishing_id
-domain = phishing_domain
-merge = phishing_merge
-prefix = "p"
+id_csv = benign_id
+domain = benign_domain
+merge = benign_merge
+prefix = "b"
 main()

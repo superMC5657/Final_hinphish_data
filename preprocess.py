@@ -17,7 +17,7 @@ def main():
     data[f'{prefix}_a-domain'] = data[f'{prefix}_a-domain'].map(
         lambda x: list(
             map(lambda y: y,
-                x.replace("www.", "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(','))))
+                x.replace('\"', "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(','))))
 
     print(data)
     print()

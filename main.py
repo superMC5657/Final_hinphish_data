@@ -41,7 +41,7 @@ def main(args):
     test_mask = test_mask.to(args['device'])
 
     if args['hetero']:
-        from model_hetero import HAN
+        from models.model_hetero import HAN
         model = HAN(meta_paths=[['pa', 'ap'], ['pf', 'fp']],
                     in_size=features.shape[1],
                     hidden_size=args['hidden_units'],
@@ -50,7 +50,7 @@ def main(args):
                     dropout=args['dropout']).to(args['device'])
         g = g.to(args['device'])
     else:
-        from model import HAN
+        from models.model import HAN
         model = HAN(num_meta_paths=len(g),
                     in_size=features.shape[1],
                     hidden_size=args['hidden_units'],

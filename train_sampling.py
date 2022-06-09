@@ -16,8 +16,8 @@ from dgl.sampling import RandomWalkNeighborSampler
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 
-from model_hetero import SemanticAttention
-from utils import EarlyStopping, set_random_seed
+from models.model_hetero import SemanticAttention
+from utils import EarlyStopping
 
 
 class HANLayer(torch.nn.Module):
