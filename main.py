@@ -3,6 +3,7 @@ from sklearn.metrics import f1_score
 
 from utils import load_data, EarlyStopping
 
+
 def score(logits, labels):
     _, indices = torch.max(logits, dim=1)
     prediction = indices.long().cpu().numpy()
@@ -14,6 +15,7 @@ def score(logits, labels):
 
     return accuracy, micro_f1, macro_f1
 
+
 def evaluate(model, g, features, labels, mask, loss_func):
     model.eval()
     with torch.no_grad():
@@ -22,6 +24,7 @@ def evaluate(model, g, features, labels, mask, loss_func):
     accuracy, micro_f1, macro_f1 = score(logits[mask], labels[mask])
 
     return loss, accuracy, micro_f1, macro_f1
+
 
 def main(args):
     # If args['hetero'] is True, g would be a heterogeneous graph.
@@ -43,6 +46,15 @@ def main(args):
     if args['hetero']:
         from models.model_hetero import HAN
         model = HAN(meta_paths=[['pa', 'ap'], ['pf', 'fp']],
+                    in_size=features.shape[1],
+                    hidden_size=args['hidden_units'],
+                    out_size=num_classes,
+                    num_heads=args['num_heads'],
+                    dropout=args['dropout']).to(args['device'])
+        g = g.to(args['device'])
+    elif args['hetero_url']:
+        from models.model_hetero import HAN
+        model = HAN(meta_paths=[['alink']],
                     in_size=features.shape[1],
                     hidden_size=args['hidden_units'],
                     out_size=num_classes,
@@ -88,6 +100,7 @@ def main(args):
     test_loss, test_acc, test_micro_f1, test_macro_f1 = evaluate(model, g, features, labels, test_mask, loss_fcn)
     print('Test loss {:.4f} | Test Micro f1 {:.4f} | Test Macro f1 {:.4f}'.format(
         test_loss.item(), test_micro_f1, test_macro_f1))
+
 
 if __name__ == '__main__':
     import argparse
