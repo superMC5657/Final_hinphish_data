@@ -231,16 +231,59 @@ def load_acm_raw(remove_self_loop):
 
 def load_url(remove_self_loop):
     assert not remove_self_loop
-    # url_id_path = "data/phishing/phishing_id.csv"
-    url_id_path = "data/phishing/phishing_merge_url.csv"
-    url_alink_url_path = "data/phishing/phishing_a-domain_new.csv"
-    url_ip_url_path = "data/phishing/phishing_ip_new.csv"
-    url_feature = "data/phishing/phishing_url_feature_new.csv"
 
-    url_id = pd.read_csv(url_id_path).values.tolist()
-    url_alink_url = pd.read_csv(url_alink_url_path)
-    url_ip_url = pd.read_csv(url_ip_url_path)
-    url_feature = pd.read_csv(url_feature)
+    b_url_ip, b_url_alink_url, b_url_ip_url, b_url_feature = load_label_url('benign')
+    # url_id_path = "data/phishing/phishing_id.csv"
+    p_url_ip, p_url_alink_url, p_url_ip_url, p_url_feature = load_label_url('phishing')
+
+    # get map
+    url_token_map = b_url_ip.values.tolist() #29782
+    b_id2url = [u[0] for u in url_token_map]
+    b_url2id = {u:idx for idx, u in enumerate(b_id2url)}
+
+    url_token_map = p_url_ip.values.tolist()
+    p_id2url = [u[0] for u in url_token_map]
+    p_url2id = {u:idx for idx, u in enumerate(p_id2url)}
+
+    print(len(b_url2id.keys()))
+    print(len(p_url2id.keys()))
+
+    # get alink edge
+    b_alink_edge_list = []
+    for row in range(len(b_url_alink_url)):
+        from_url = b_url_alink_url.iloc[row]['b_url']
+        to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
+        to_url_list = filter_str(to_url_list)
+        for to in to_url_list:
+            if to in b_id2url:
+                b_alink_edge_list.append((b_url2id[from_url], b_url2id[to]))
+
+    b_ip_edge_list = []
+    for row in range(len(p_url_ip_url)):
+        from_url = b_url_alink_url.iloc[row]['b_url']
+        to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
+        to_url_list = filter_str(to_url_list)
+        for to in to_url_list:
+            if to in b_id2url:
+                alink_edge_list.append((b_url2id[from_url], b_url2id[to]))
+
+
+def filter_str(x):
+    return x.replace('\"', "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(',')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def load_label_url(label):
@@ -252,7 +295,7 @@ def load_label_url(label):
     url_ip_url_path = f"data/{label}/{label}_ip_new.csv"
 
     # feature
-    url_feature_path = f"data/{label}/{label}_feature_new.csv"
+    url_feature_path = f"data/{label}/{label}_url_featrue_new.csv"
 
     # to pd
     url_ip = pd.read_csv(url_ip_path)
