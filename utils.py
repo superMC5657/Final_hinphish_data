@@ -252,7 +252,7 @@ def load_url(remove_self_loop):
     # get alink edge
     b_from_alink_edge_list = []
     b_to_alink_edge_list = []
-    for row in tqdm(range(len(b_url_alink_url))[:100]):
+    for row in tqdm(range(len(b_url_alink_url))):
         from_url = b_url_alink_url.iloc[row]['b_url']
         to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
         to_url_list = filter_str(to_url_list)
@@ -263,7 +263,7 @@ def load_url(remove_self_loop):
 
     p_from_alink_edge_list = []
     p_to_alink_edge_list = []
-    for row in tqdm(range(len(p_url_alink_url))[:100]):
+    for row in tqdm(range(len(p_url_alink_url))):
         from_url = p_url_alink_url.iloc[row]['p_url']
         to_url_list = p_url_alink_url.iloc[row]['p_a-domain']
         to_url_list = filter_str(to_url_list)
@@ -280,8 +280,32 @@ def load_url(remove_self_loop):
             ('url', 'alink', 'url'): (from_nid_list, to_nid_list)
         }
     )
+    features = torch.FloatTensor(url_feature['feat'].values.tolist())
+    labels = torch.LongTensor(url_feature['label'].values)
+    nids = torch.LongTensor(url_feature['url_token'].values)
 
-    return hg
+    num_classes = 2
+
+    float_mask = np.zeros(len(url_feature))
+    for label in [1, -1]:
+        mask = (url_feature['label'] == label).values
+        float_mask[mask] = np.random.permutation(np.linspace(0, 1, mask.sum()))
+
+    train_idx = np.where(float_mask <= 0.2)[0]
+    val_idx = np.where((float_mask > 0.2) & (float_mask <= 0.3))[0]
+    test_idx = np.where(float_mask > 0.3)[0]
+
+    num_nodes = hg.number_of_nodes('url')
+    train_idx = train_idx[train_idx < num_nodes]
+    val_idx = val_idx[val_idx < num_nodes]
+    test_idx = test_idx[test_idx < num_nodes]
+
+    train_mask = get_binary_mask(num_nodes, train_idx)
+    val_mask = get_binary_mask(num_nodes, val_idx)
+    test_mask = get_binary_mask(num_nodes, test_idx)
+
+    return hg, features, labels, num_classes, train_idx, val_idx, test_idx, \
+           train_mask, val_mask, test_mask
 
     #
 
