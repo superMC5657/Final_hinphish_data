@@ -13,6 +13,7 @@ from dgl.data.utils import download, get_download_dir, _get_dgl_url
 from pprint import pprint
 from scipy import sparse
 from scipy import io as sio
+from tqdm import tqdm
 
 
 def set_random_seed(seed=0):
@@ -233,57 +234,60 @@ def load_url(remove_self_loop):
     assert not remove_self_loop
 
     b_url_ip, b_url_alink_url, b_url_ip_url, b_url_feature = load_label_url('benign')
-    # url_id_path = "data/phishing/phishing_id.csv"
     p_url_ip, p_url_alink_url, p_url_ip_url, p_url_feature = load_label_url('phishing')
 
     # get map
-    url_token_map = b_url_ip.values.tolist() #29782
-    b_id2url = [u[0] for u in url_token_map]
-    b_url2id = {u:idx for idx, u in enumerate(b_id2url)}
+    p_url_token_map = set([u[0] for u in b_url_ip.values.tolist()])
+    b_url_token_map = set([u[0] for u in p_url_ip.values.tolist()])
+    id2url = list(set.union(p_url_token_map, b_url_token_map))
+    url2id = {u: idx for idx, u in enumerate(id2url)}
 
-    url_token_map = p_url_ip.values.tolist()
-    p_id2url = [u[0] for u in url_token_map]
-    p_url2id = {u:idx for idx, u in enumerate(p_id2url)}
-
-    print(len(b_url2id.keys()))
-    print(len(p_url2id.keys()))
+    b_url_feature = b_url_feature.rename(columns={'b_url': 'url'})
+    p_url_feature = p_url_feature.rename(columns={'p_url': 'url'})
+    url_feature = pd.concat([b_url_feature, p_url_feature], axis=0)
+    url_feature['url_token'] = url_feature['url'].apply(lambda x: url2id[x])
+    url_feature['feat'] = url_feature.iloc[:, 1:-1].values.tolist()
+    url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
 
     # get alink edge
-    b_alink_edge_list = []
-    for row in range(len(b_url_alink_url)):
+    b_from_alink_edge_list = []
+    b_to_alink_edge_list = []
+    for row in tqdm(range(len(b_url_alink_url))[:100]):
         from_url = b_url_alink_url.iloc[row]['b_url']
         to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
         to_url_list = filter_str(to_url_list)
         for to in to_url_list:
-            if to in b_id2url:
-                b_alink_edge_list.append((b_url2id[from_url], b_url2id[to]))
+            if to in id2url:
+                b_from_alink_edge_list.append(url2id[from_url])
+                b_to_alink_edge_list.append(url2id[to])
 
-    b_ip_edge_list = []
-    for row in range(len(p_url_ip_url)):
-        from_url = b_url_alink_url.iloc[row]['b_url']
-        to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
+    p_from_alink_edge_list = []
+    p_to_alink_edge_list = []
+    for row in tqdm(range(len(p_url_alink_url))[:100]):
+        from_url = p_url_alink_url.iloc[row]['p_url']
+        to_url_list = p_url_alink_url.iloc[row]['p_a-domain']
         to_url_list = filter_str(to_url_list)
         for to in to_url_list:
-            if to in b_id2url:
-                alink_edge_list.append((b_url2id[from_url], b_url2id[to]))
+            if to in id2url:
+                p_from_alink_edge_list.append(url2id[from_url])
+                p_to_alink_edge_list.append(url2id[to])
+
+    from_nid_list = np.array(b_from_alink_edge_list + p_from_alink_edge_list)
+    to_nid_list = np.array(b_to_alink_edge_list + p_to_alink_edge_list)
+
+    hg = dgl.heterograph(
+        {
+            ('url', 'alink', 'url'): (from_nid_list, to_nid_list)
+        }
+    )
+
+    return hg
+
+    #
 
 
 def filter_str(x):
     return x.replace('\"', "").replace("\'", "").replace("[", "").replace("]", "").replace(" ", "").split(',')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def load_label_url(label):
