@@ -9,7 +9,7 @@ import random
 import pandas as pd
 import torch
 
-from dgl.data.utils import download, get_download_dir, _get_dgl_url
+from dgl.data.utils import download, get_download_dir, _get_dgl_url, save_graphs, load_graphs
 from pprint import pprint
 from scipy import sparse
 from scipy import io as sio
@@ -250,36 +250,38 @@ def load_url(remove_self_loop):
     url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
 
     # get alink edge
-    b_from_alink_edge_list = []
-    b_to_alink_edge_list = []
-    for row in tqdm(range(len(b_url_alink_url))):
-        from_url = b_url_alink_url.iloc[row]['b_url']
-        to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
-        to_url_list = filter_str(to_url_list)
-        for to in to_url_list:
-            if to in id2url:
-                b_from_alink_edge_list.append(url2id[from_url])
-                b_to_alink_edge_list.append(url2id[to])
-
-    p_from_alink_edge_list = []
-    p_to_alink_edge_list = []
-    for row in tqdm(range(len(p_url_alink_url))):
-        from_url = p_url_alink_url.iloc[row]['p_url']
-        to_url_list = p_url_alink_url.iloc[row]['p_a-domain']
-        to_url_list = filter_str(to_url_list)
-        for to in to_url_list:
-            if to in id2url:
-                p_from_alink_edge_list.append(url2id[from_url])
-                p_to_alink_edge_list.append(url2id[to])
-
-    from_nid_list = np.array(b_from_alink_edge_list + p_from_alink_edge_list)
-    to_nid_list = np.array(b_to_alink_edge_list + p_to_alink_edge_list)
-
-    hg = dgl.heterograph(
-        {
-            ('url', 'alink', 'url'): (from_nid_list, to_nid_list)
-        }
-    )
+    # b_from_alink_edge_list = []
+    # b_to_alink_edge_list = []
+    # for row in tqdm(range(len(b_url_alink_url))):
+    #     from_url = b_url_alink_url.iloc[row]['b_url']
+    #     to_url_list = b_url_alink_url.iloc[row]['b_a-domain']
+    #     to_url_list = filter_str(to_url_list)
+    #     for to in to_url_list:
+    #         if to in id2url:
+    #             b_from_alink_edge_list.append(url2id[from_url])
+    #             b_to_alink_edge_list.append(url2id[to])
+    #
+    # p_from_alink_edge_list = []
+    # p_to_alink_edge_list = []
+    # for row in tqdm(range(len(p_url_alink_url))):
+    #     from_url = p_url_alink_url.iloc[row]['p_url']
+    #     to_url_list = p_url_alink_url.iloc[row]['p_a-domain']
+    #     to_url_list = filter_str(to_url_list)
+    #     for to in to_url_list:
+    #         if to in id2url:
+    #             p_from_alink_edge_list.append(url2id[from_url])
+    #             p_to_alink_edge_list.append(url2id[to])
+    #
+    # from_nid_list = np.array(b_from_alink_edge_list + p_from_alink_edge_list)
+    # to_nid_list = np.array(b_to_alink_edge_list + p_to_alink_edge_list)
+    #
+    # hg = dgl.heterograph(
+    #     {
+    #         ('url', 'alink', 'url'): (from_nid_list, to_nid_list)
+    #     }
+    # )
+    # save_graphs("data/hg.bin", hg)
+    hg = load_graphs("data/hg.bin")[0][0]
     features = torch.FloatTensor(url_feature['feat'].values.tolist())
     labels = torch.LongTensor(url_feature['label'].values)
     nids = torch.LongTensor(url_feature['url_token'].values)

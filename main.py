@@ -44,15 +44,15 @@ def main(args):
     test_mask = test_mask.to(args['device'])
 
     if args['hetero']:
-        from models.model_hetero import HAN
-        model = HAN(meta_paths=[['pa', 'ap'], ['pf', 'fp']],
-                    in_size=features.shape[1],
-                    hidden_size=args['hidden_units'],
-                    out_size=num_classes,
-                    num_heads=args['num_heads'],
-                    dropout=args['dropout']).to(args['device'])
-        g = g.to(args['device'])
-    elif args['hetero_url']:
+        # from models.model_hetero import HAN
+        # model = HAN(meta_paths=[['pa', 'ap'], ['pf', 'fp']],
+        #             in_size=features.shape[1],
+        #             hidden_size=args['hidden_units'],
+        #             out_size=num_classes,
+        #             num_heads=args['num_heads'],
+        #             dropout=args['dropout']).to(args['device'])
+        # g = g.to(args['device'])
+    # # elif args['hetero_url']:
         from models.model_hetero import HAN
         model = HAN(meta_paths=[['alink']],
                     in_size=features.shape[1],
@@ -72,7 +72,7 @@ def main(args):
         g = [graph.to(args['device']) for graph in g]
 
     stopper = EarlyStopping(patience=args['patience'])
-    loss_fcn = torch.nn.CrossEntropyLoss()
+    loss_fcn = torch.nn.CrossEntropyLoss().to(args['device'])
     optimizer = torch.optim.Adam(model.parameters(), lr=args['lr'],
                                  weight_decay=args['weight_decay'])
 
