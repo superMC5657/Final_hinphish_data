@@ -283,6 +283,7 @@ def load_url(remove_self_loop):
     # save_graphs("data/hg.bin", hg)
     hg = load_graphs("data/hg.bin")[0][0]
     features = torch.FloatTensor(url_feature['feat'].values.tolist())
+    url_feature[url_feature['label'] == -1] = 0
     labels = torch.LongTensor(url_feature['label'].values)
     nids = torch.LongTensor(url_feature['url_token'].values)
 
