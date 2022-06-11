@@ -237,19 +237,67 @@ def load_url(remove_self_loop):
     p_url_ip, p_url_alink_url, p_url_ip_url, p_url_feature = load_label_url('phishing')
 
     # get map
-    p_url_token_map = set([u[0] for u in b_url_ip.values.tolist()])
-    b_url_token_map = set([u[0] for u in p_url_ip.values.tolist()])
+    p_url_token_map = set([u[0] for u in p_url_ip.values.tolist()])
+    b_url_token_map = set([u[0] for u in b_url_ip.values.tolist()])
     id2url = list(set.union(p_url_token_map, b_url_token_map))
     url2id = {u: idx for idx, u in enumerate(id2url)}
 
-    b_url_feature = b_url_feature.rename(columns={'b_url': 'url'})
-    p_url_feature = p_url_feature.rename(columns={'p_url': 'url'})
-    url_feature = pd.concat([b_url_feature, p_url_feature], axis=0)
-    url_feature['url_token'] = url_feature['url'].apply(lambda x: url2id[x])
-    url_feature['feat'] = url_feature.iloc[:, 1:-1].values.tolist()
-    url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
+    # get ip connect
+    # p_url_ip_url['p_ip'] = p_url_ip_url['p_ip'].apply(lambda x: filter_str(x))
+    # p_url_ip_map = []
+    # for ip in p_url_ip_url['p_ip'].values.tolist():
+    #     p_url_ip_map += ip
+    # p_url_ip_map = set(p_url_ip_map)
+    # b_url_ip_map = set(ip for ip in b_url_ip_url['b_ip'].values.tolist())
+    # ip_list = list(set.union(p_url_ip_map, b_url_ip_map))
+    # b_url_ip_url = b_url_ip_url.rename(columns={'b_url': 'url', 'b_ip': 'ip'})
+    # p_url_ip_url = p_url_ip_url.rename(columns={'p_url': 'url', 'p_ip': 'ip'})
+    # url_ip_url = pd.concat([b_url_ip_url, p_url_ip_url], axis=0).reindex()
+    #
+    # ip_urllist_dict = {}
+    # for ip in tqdm(ip_list):
+    #     ip = filter_str(ip)
+    #     for each_ip in ip:
+    #         related_url = url_ip_url[url_ip_url['ip'].apply(lambda x: each_ip in x)]['url'].values.tolist()
+    #         ip_urllist_dict[each_ip] = related_url
 
-    # get alink edge
+
+    # get ip edge
+    # from_ip_edge_list = []
+    # to_ip_edge_list = []
+    # for row in tqdm(range(len(url_ip_url))):
+    #     from_url = url_ip_url.iloc[row]['url']
+    #     to_ip_list = url_ip_url.iloc[row]['ip']
+    #     if isinstance(to_ip_list, list):
+    #         for to_ip in to_ip_list:
+    #             to_url_list = ip_urllist_dict[to_ip]
+    #             for to in to_url_list:
+    #                 from_ip_edge_list.append(url2id[from_url])
+    #                 to_ip_edge_list.append(url2id[to])
+    #     else:
+    #         to_url_list = ip_urllist_dict[to_ip_list]
+    #         for to in to_url_list:
+    #             from_ip_edge_list.append(url2id[from_url])
+    #             to_ip_edge_list.append(url2id[to])
+    #
+    # # get alink connect
+    # b_url_alink_url = b_url_alink_url.rename(columns={'b_url': 'url', 'b_a-domain': 'alink'})
+    # p_url_alink_url = p_url_alink_url.rename(columns={'p_url': 'url', 'p_a-domain': 'alink'})
+    # url_alink_url = pd.concat([b_url_alink_url, p_url_alink_url], axis=0).reindex()
+    # url_alink_url['alink'] = url_alink_url['alink'].apply(lambda x: filter_str(x))
+    #
+    # from_alink_edge_list = []
+    # to_alink_edge_list = []
+    # for row in tqdm(range(len(url_alink_url))):
+    #     from_url = url_alink_url.iloc[row]['url']
+    #     to_url_list = url_alink_url.iloc[row]['alink']
+    #     for to in to_url_list:
+    #         if to in id2url:
+    #             from_alink_edge_list.append(url2id[from_url])
+    #             to_alink_edge_list.append(url2id[to])
+
+    #
+    #
     # b_from_alink_edge_list = []
     # b_to_alink_edge_list = []
     # for row in tqdm(range(len(b_url_alink_url))):
@@ -274,14 +322,21 @@ def load_url(remove_self_loop):
     #
     # from_nid_list = np.array(b_from_alink_edge_list + p_from_alink_edge_list)
     # to_nid_list = np.array(b_to_alink_edge_list + p_to_alink_edge_list)
-    #
+
     # hg = dgl.heterograph(
     #     {
-    #         ('url', 'alink', 'url'): (from_nid_list, to_nid_list)
+    #         ('url', 'alink', 'url'): (from_alink_edge_list, to_alink_edge_list),
+    #         ('url', 'ip', 'url'): (from_ip_edge_list, to_ip_edge_list)
     #     }
     # )
     # save_graphs("data/hg.bin", hg)
     hg = load_graphs("data/hg.bin")[0][0]
+    b_url_feature = b_url_feature.rename(columns={'b_url': 'url'})
+    p_url_feature = p_url_feature.rename(columns={'p_url': 'url'})
+    url_feature = pd.concat([b_url_feature, p_url_feature], axis=0)
+    url_feature['url_token'] = url_feature['url'].apply(lambda x: url2id[x])
+    url_feature['feat'] = url_feature.iloc[:, 1:-1].values.tolist()
+    url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
     features = torch.FloatTensor(url_feature['feat'].values.tolist())
     url_feature[url_feature['label'] == -1] = 0
     labels = torch.LongTensor(url_feature['label'].values)
