@@ -93,9 +93,9 @@ default_configure = {
     'lr': 0.005,  # Learning rate
     'num_heads': [8],  # Number of attention heads for node-level attention
     'hidden_units': 8,
-    'dropout': 0.6,
+    'dropout': 0.1,
     'weight_decay': 0.001,
-    'num_epochs': 200,
+    'num_epochs': 400,
     'patience': 100
 }
 
@@ -331,9 +331,9 @@ def load_url(remove_self_loop):
         mask = (url_feature['label'] == label).values
         float_mask[mask] = np.random.permutation(np.linspace(0, 1, mask.sum()))
 
-    train_idx = np.where(float_mask <= 0.2)[0]
-    val_idx = np.where((float_mask > 0.2) & (float_mask <= 0.3))[0]
-    test_idx = np.where(float_mask > 0.3)[0]
+    train_idx = np.where(float_mask <= 0.8)[0]
+    val_idx = np.where((float_mask > 0.8) & (float_mask <= 0.9))[0]
+    test_idx = np.where(float_mask > 0.9)[0]
 
     num_nodes = hg.number_of_nodes('url')
     train_idx = train_idx[train_idx < num_nodes]
