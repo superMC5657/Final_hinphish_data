@@ -54,7 +54,7 @@ def main(args):
         # g = g.to(args['device'])
     # # elif args['hetero_url']:
         from models.model_hetero import HAN
-        model = HAN(meta_paths=[['alink']],
+        model = HAN(meta_paths=[['alink'], ['ip']],
                     in_size=features.shape[1],
                     hidden_size=args['hidden_units'],
                     out_size=num_classes,

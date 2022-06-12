@@ -38,8 +38,21 @@ def update_graph(url: str, related: list, type='alink'):
     with open('data/url2id_map.pkl', 'wb') as f:
         pickle.dump(url2id, f)
 
-def update_model():
-    pass
+def update_model(args, features, num_classes=2):
+    hg = load_graphs("data/hg.bin")[0][0]
+    with open('data/id2url_map.pkl', 'rb') as f:
+        id2url = pickle.load(f)
+
+    with open('data/url2id_map.pkl', 'rb') as f:
+        url2id = pickle.load(f)
+    from models.model_hetero import HAN
+    model = HAN(meta_paths=[['alink'], ['ip']],
+                in_size=features.shape[1],
+                hidden_size=args['hidden_units'],
+                out_size=num_classes,
+                num_heads=args['num_heads'],
+                dropout=args['dropout']).to(args['device'])
+    g = g.to(args['device'])
 
 
 def inference():
@@ -52,10 +65,28 @@ def main():
               "http://www.mariagraziagiove.com/ibdg/phpmailer/phpmailer/language/BLmsDqH6533S83cNf6c/"]
     update_graph(url, related)
 
+    update_model(args)
+
+
+
+
 
 if __name__ == '__main__':
     import argparse
 
     from utils import setup
 
-    main()
+    parser = argparse.ArgumentParser('HAN')
+    parser.add_argument('-s', '--seed', type=int, default=1,
+                        help='Random seed')
+    parser.add_argument('-ld', '--log-dir', type=str, default='results',
+                        help='Dir for saving training results')
+    parser.add_argument('-d', '--dataset', type=str, default='ACM',
+                        help='Dataset which model learned')
+    parser.add_argument('--hetero', action='store_true',
+                        help='Use metapath coalescing with DGL\'s own dataset')
+    args = parser.parse_args().__dict__
+
+    args = setup(args)
+
+    main(args)
