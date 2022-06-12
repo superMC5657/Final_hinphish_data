@@ -277,13 +277,13 @@ def load_url(remove_self_loop):
             for to_ip in to_ip_list:
                 to_url_list = ip_urllist_dict[to_ip]
                 for to in to_url_list:
-                    if to in id2url:
+                    if to in id2url_list:
                         from_ip_edge_list.append(url2id[from_url])
                         to_ip_edge_list.append(url2id[to])
         else:
             to_url_list = ip_urllist_dict[to_ip_list]
             for to in to_url_list:
-                if to in id2url:
+                if to in id2url_list:
                     from_ip_edge_list.append(url2id[from_url])
                     to_ip_edge_list.append(url2id[to])
     #
@@ -299,7 +299,7 @@ def load_url(remove_self_loop):
         from_url = url_alink_url.iloc[row]['url']
         to_url_list = url_alink_url.iloc[row]['alink']
         for to in to_url_list:
-            if to in id2url:
+            if to in id2url_list:
                 from_alink_edge_list.append(url2id[from_url])
                 to_alink_edge_list.append(url2id[to])
 
