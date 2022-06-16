@@ -97,7 +97,7 @@ default_configure = {
     'hidden_units': 8,
     'dropout': 0.1,
     'weight_decay': 0.001,
-    'num_epochs': 400,
+    'num_epochs': 120,
     'patience': 100
 }
 

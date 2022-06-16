@@ -1,5 +1,5 @@
 import torch
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 
 from utils.util import load_data, EarlyStopping
 
@@ -52,7 +52,7 @@ def main(args):
         #             num_heads=args['num_heads'],
         #             dropout=args['dropout']).to(args['device'])
         # g = g.to(args['device'])
-    # # elif args['hetero_url']:
+        # # elif args['hetero_url']:
         from models.model_hetero import HAN
         model = HAN(meta_paths=[['alink'], ['ip']],
                     in_size=features.shape[1],
@@ -88,15 +88,15 @@ def main(args):
         train_acc, train_micro_f1, train_macro_f1 = score(logits[train_mask], labels[train_mask])
         val_loss, val_acc, val_micro_f1, val_macro_f1 = evaluate(model, g, features, labels, val_mask, loss_fcn)
         if epoch % 100 == 0:
-            print('Epoch {:d} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
-                  'Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
-                epoch + 1, loss.item(), train_micro_f1, train_macro_f1, val_loss.item(), val_micro_f1, val_macro_f1))
-
+            print('Epoch {:d} | Train acc {:.4f} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
+                  'Val acc {:.4f} | Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
+                epoch + 1, train_acc, loss.item(), train_micro_f1, train_macro_f1, val_acc, val_loss.item(),
+                val_micro_f1, val_macro_f1))
 
     stopper.save_checkpoint(model)
     test_loss, test_acc, test_micro_f1, test_macro_f1 = evaluate(model, g, features, labels, test_mask, loss_fcn)
-    print('Test loss {:.4f} | Test Micro f1 {:.4f} | Test Macro f1 {:.4f}'.format(
-        test_loss.item(), test_micro_f1, test_macro_f1))
+    print('Test acc {:.4f} | Test loss {:.4f} | Test Micro f1 {:.4f} | Test Macro f1 {:.4f}'.format(
+        test_acc, test_loss.item(), test_micro_f1, test_macro_f1))
 
 
 if __name__ == '__main__':

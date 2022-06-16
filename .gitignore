@@ -1,3 +1,5 @@
-.idea
+*.idea
 *.pth
 *pycache*
+data/url2id_map.pkl
+data/id2url_map.pkl

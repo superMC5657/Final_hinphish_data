@@ -11,8 +11,12 @@ from main import evaluate, score
 from utils.features_extraction_new import featureExtraction
 from utils.parse_alink import parse_alink
 
-ip_urllist_dict = load_dict("data/ip_url_dict.json")
+ip_url_list_dict: dict = load_dict("data/ip_url_dict.json")
+alink_url_list_dict: dict = load_dict("data/alink_url_dict.json")
+b_url_set = pd.read_csv("data/benign/benign_merge_url.csv")['b_url'].values.tolist()
+p_url_set = pd.read_csv("data/phishing/phishing_merge_url.csv")['p_url'].values.tolist()
 
+filter = b_url_set + p_url_set
 
 def update_graph(url: str, related: list, type='alink'):
     hg = load_graphs("data/backup/hg.bin")[0][0]
@@ -75,9 +79,9 @@ def inference(args, url, feat, num_classes=2):
         mask = (url_feature['label'] == label).values
         float_mask[mask] = np.random.permutation(np.linspace(0, 1, mask.sum()))
 
-    train_idx = np.where(float_mask <= 0.8)[0]
-    val_idx = np.where((float_mask > 0.8) & (float_mask <= 0.9))[0]
-    test_idx = np.where(float_mask > 0.9)[0]
+    train_idx = np.where(float_mask <= 0.75)[0]
+    val_idx = np.where((float_mask > 0.75) & (float_mask <= 0.95))[0]
+    test_idx = np.where(float_mask > 0.95)[0]
 
     num_nodes = hg.number_of_nodes('url')
     train_idx = train_idx[train_idx < num_nodes]
@@ -127,14 +131,15 @@ def inference(args, url, feat, num_classes=2):
         train_acc, train_micro_f1, train_macro_f1 = score(logits[train_mask], labels[train_mask])
         val_loss, val_acc, val_micro_f1, val_macro_f1 = evaluate(model, hg, all_feat, labels, val_mask, loss_fcn)
         if epoch % 100 == 0:
-            print('Epoch {:d} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
-                  'Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
-                epoch + 1, loss.item(), train_micro_f1, train_macro_f1, val_loss.item(), val_micro_f1, val_macro_f1))
+            print('Epoch {:d} | Train acc {:.4f} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
+                  'Val acc {:.4f} | Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
+                epoch + 1, train_acc, loss.item(), train_micro_f1, train_macro_f1, val_acc, val_loss.item(),
+                val_micro_f1, val_macro_f1))
 
     stopper.save_checkpoint(model)
     test_loss, test_acc, test_micro_f1, test_macro_f1 = evaluate(model, hg, all_feat, labels, test_mask, loss_fcn)
-    print('Test loss {:.4f} | Test Micro f1 {:.4f} | Test Macro f1 {:.4f}'.format(
-        test_loss.item(), test_micro_f1, test_macro_f1))
+    print('Test acc {:.4f} | Test loss {:.4f} | Test Micro f1 {:.4f} | Test Macro f1 {:.4f}'.format(
+        test_acc, test_loss.item(), test_micro_f1, test_macro_f1))
 
     infer_id = url2id[url]
     model.eval()
@@ -147,14 +152,24 @@ def inference(args, url, feat, num_classes=2):
 
 
 def main(args):
-    url = "https://www.baidu.com"
-    domains = parse_alink(url)
-    ip = parse_ip(url)
+    url = "https://a4arquitectos.es/ionos/?0="
+    domains = ['www.ionos.com']
+    ip = '217.76.130.122'
 
-    domain_url_list = parse_url_domain(domains)
-    ip_url_list = ip_urllist_dict[ip]
+    # domain_url_list = parse_url_domain(domains)
+    ip_url_list = ip_url_list_dict.get(ip)
+    if ip_url_list is None:
+        ip_url_list = []
+    alink_url_list = []
+    for alink in domains:
+        url_list = alink_url_list_dict.get(alink)
+        if url_list is not None:
+            alink_url_list += url_list
+
+    alink_url_list = list(set(alink_url_list))
     features = featureExtraction(url)
-    update_graph(url, [])
+    update_graph(url, ip_url_list, type="ip")
+    update_graph(url, alink_url_list, type="alink")
 
     res = inference(args, url, features)
 

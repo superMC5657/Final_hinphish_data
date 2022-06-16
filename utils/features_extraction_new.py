@@ -444,7 +444,6 @@ def featureExtraction(url):
     soup = result[2]
     # 获取ip
     ip = parse_ip(domain)
-    print(ip)
 
     # url特征
     features.append(having_ip_address(url))
