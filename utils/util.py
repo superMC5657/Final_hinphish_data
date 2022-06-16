@@ -1,4 +1,6 @@
 import datetime
+import json
+
 import dgl
 import errno
 import numpy as np
@@ -259,13 +261,7 @@ def load_url(remove_self_loop):
     p_url_ip_url = p_url_ip_url.rename(columns={'p_url': 'url', 'p_ip': 'ip'})
     url_ip_url = pd.concat([b_url_ip_url, p_url_ip_url], axis=0).reindex()
 
-    ip_urllist_dict = {}
-    for ip in tqdm(ip_list):
-        ip = filter_str(ip)
-        for each_ip in ip:
-            related_url = url_ip_url[url_ip_url['ip'].apply(lambda x: each_ip in x)]['url'].values.tolist()
-            ip_urllist_dict[each_ip] = related_url
-
+    ip_urllist_dict = load_dict("data/ip_url_dict.json")
 
     # get ip edge
     from_ip_edge_list = []
@@ -302,8 +298,6 @@ def load_url(remove_self_loop):
             if to in id2url_list:
                 from_alink_edge_list.append(url2id[from_url])
                 to_alink_edge_list.append(url2id[to])
-
-
 
     hg = dgl.heterograph(
         {
@@ -390,6 +384,13 @@ def load_data(dataset, remove_self_loop=False):
         return load_url(remove_self_loop)
     else:
         return NotImplementedError('Unsupported dataset {}'.format(dataset))
+
+
+def load_dict(filename):
+    '''load dict from json file'''
+    with open(filename, "r") as json_file:
+        dic = json.load(json_file)
+    return dic
 
 
 class EarlyStopping(object):

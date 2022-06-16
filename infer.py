@@ -2,12 +2,16 @@ import dgl
 import torch
 import pickle
 from dgl.data.utils import download, get_download_dir, _get_dgl_url, save_graphs, load_graphs
-from utils.util import load_label_url, get_binary_mask, EarlyStopping
+
+from utils.parse_ip import parse_ip
+from utils.util import load_label_url, get_binary_mask, EarlyStopping, load_dict
 import numpy as np
 import pandas as pd
 from main import evaluate, score
 from utils.features_extraction_new import featureExtraction
 from utils.parse_alink import parse_alink
+
+ip_urllist_dict = load_dict("data/ip_url_dict.json")
 
 
 def update_graph(url: str, related: list, type='alink'):
@@ -145,6 +149,10 @@ def inference(args, url, feat, num_classes=2):
 def main(args):
     url = "https://www.baidu.com"
     domains = parse_alink(url)
+    ip = parse_ip(url)
+
+    domain_url_list = parse_url_domain(domains)
+    ip_url_list = ip_urllist_dict[ip]
     features = featureExtraction(url)
     update_graph(url, [])
 
