@@ -9,3 +9,6 @@ phishing_ip = "data/phishing/phishing_ip_new.csv"
 phishing_merge = "data/phishing/phishing_merge_url.csv"
 phishing_feature = "data/phishing/phishing_url_featrue_new.csv"
 phishing_id = "data/phishing/phishing_id.csv"
+
+blacklist = "data/blacklist/phishing_url.csv"
+whitelist = "data/blacklist/Alexa.csv"

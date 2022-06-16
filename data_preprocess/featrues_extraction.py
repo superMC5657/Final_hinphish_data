@@ -20,8 +20,8 @@ import whois
 from datetime import datetime
 import time
 import os
-from googlesearch import search
 from lxml import html
+from googlesearch.googlesearch import GoogleSearch
 from patterns import *
 import csv
 
@@ -359,7 +359,8 @@ def page_rank(domain):
 
 # 26.google_index
 def google_index(url):
-    site = search(url, 5)
+    search = GoogleSearch()
+    site = search.search(url, 5)
     return 1 if site else -1
 
 # 27.Links_pointing_to_page

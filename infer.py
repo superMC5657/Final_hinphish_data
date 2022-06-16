@@ -2,18 +2,20 @@ import dgl
 import torch
 import pickle
 from dgl.data.utils import download, get_download_dir, _get_dgl_url, save_graphs, load_graphs
-from utils import load_label_url, get_binary_mask, EarlyStopping
+from utils.util import load_label_url, get_binary_mask, EarlyStopping
 import numpy as np
 import pandas as pd
 from main import evaluate, score
+from utils.features_extraction_new import featureExtraction
+from utils.parse_alink import parse_alink
 
 
 def update_graph(url: str, related: list, type='alink'):
-    hg = load_graphs("data/hg.bin")[0][0]
-    with open('data/id2url_map.pkl', 'rb') as f:
+    hg = load_graphs("data/backup/hg.bin")[0][0]
+    with open('data/backup/id2url_map.pkl', 'rb') as f:
         id2url = pickle.load(f)
 
-    with open('data/url2id_map.pkl', 'rb') as f:
+    with open('data/backup/url2id_map.pkl', 'rb') as f:
         url2id = pickle.load(f)
 
     old_node_list = list(id2url.keys())
@@ -58,7 +60,7 @@ def inference(args, url, feat, num_classes=2):
     p_url_feature = p_url_feature.rename(columns={'p_url': 'url'})
     url_feature = pd.concat([b_url_feature, p_url_feature], axis=0)
     url_feature['url_token'] = url_feature['url'].apply(lambda x: url2id[x])
-    url_feature['feat'] = url_feature.iloc[:, 1:-1].values.tolist()
+    url_feature['feat'] = url_feature.iloc[:, 1:-2].values.tolist()
     url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
     features = torch.FloatTensor(url_feature['feat'].values.tolist())
     url_feature[url_feature['label'] == -1] = 0
@@ -102,7 +104,7 @@ def inference(args, url, feat, num_classes=2):
         test_mask = test_mask.bool()
 
     features = features.to(args['device'])
-    infer_feat = torch.FloatTensor(feat).to(args['device'])
+    infer_feat = torch.FloatTensor(feat).to(args['device']).unsqueeze(0)
     all_feat = torch.cat([features, infer_feat], dim=0)
     labels = torch.cat([labels, torch.LongTensor([0])]).to(args['device'])
     train_mask = train_mask.add(False).to(args['device'])
@@ -134,20 +136,19 @@ def inference(args, url, feat, num_classes=2):
     model.eval()
     logits = model(hg, all_feat)
     res = logits[infer_id]
-    res = torch.argmax(res).detach().to('cpu')
+    res = torch.argmax(res).detach().to('cpu').item()
     print(res)
 
     return res
 
 
 def main(args):
-    url = "miracleyin.top"
-    related = ["http://serv-acamai.com/1und1/de/index.php",
-               "http://www.mariagraziagiove.com/ibdg/phpmailer/phpmailer/language/BLmsDqH6533S83cNf6c/"]
-    feat = np.random.rand(1, 29)
-    update_graph(url, related)
+    url = "https://www.baidu.com"
+    domains = parse_alink(url)
+    features = featureExtraction(url)
+    update_graph(url, [])
 
-    res = inference(args, url, feat)
+    res = inference(args, url, features)
 
     # res = inference(args, g, model, url, old_feat, feat)
 
@@ -155,7 +156,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
 
-    from utils import setup
+    from utils.util import setup
 
     parser = argparse.ArgumentParser('HAN')
     parser.add_argument('-s', '--seed', type=int, default=1,

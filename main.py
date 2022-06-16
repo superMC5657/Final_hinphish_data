@@ -1,7 +1,7 @@
 import torch
 from sklearn.metrics import f1_score
 
-from utils import load_data, EarlyStopping
+from utils.util import load_data, EarlyStopping
 
 
 def score(logits, labels):
@@ -102,7 +102,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
 
-    from utils import setup
+    from utils.util import setup
 
     parser = argparse.ArgumentParser('HAN')
     parser.add_argument('-s', '--seed', type=int, default=1,
