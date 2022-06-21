@@ -241,9 +241,13 @@ def load_url(remove_self_loop):
     # get map
     p_url_token_map = set([u[0] for u in p_url_ip.values.tolist()])
     b_url_token_map = set([u[0] for u in b_url_ip.values.tolist()])
+
+
     id2url_list = list(set.union(p_url_token_map, b_url_token_map))
     id2url = {idx: u for idx, u in enumerate(id2url_list)}
     url2id = {u: idx for idx, u in enumerate(id2url_list)}
+
+    # one hot 映射
     with open('data/id2url_map.pkl', 'wb') as f:
         pickle.dump(id2url, f)
     with open('data/url2id_map.pkl', 'wb') as f:
@@ -261,7 +265,10 @@ def load_url(remove_self_loop):
     p_url_ip_url = p_url_ip_url.rename(columns={'p_url': 'url', 'p_ip': 'ip'})
     url_ip_url = pd.concat([b_url_ip_url, p_url_ip_url], axis=0).reindex()
 
-    ip_urllist_dict = load_dict("data/ip_url_dict.json")
+    '''得到hg之后,从此处到save_graph可注释'''
+
+    # 建立全局ip的一个url_list词典,知道ip就可以得到与谁有邻接关系
+    ip_url_list_dict = load_dict("data/ip_url_dict.json")
 
     # get ip edge
     from_ip_edge_list = []
@@ -271,13 +278,13 @@ def load_url(remove_self_loop):
         to_ip_list = url_ip_url.iloc[row]['ip']
         if isinstance(to_ip_list, list):
             for to_ip in to_ip_list:
-                to_url_list = ip_urllist_dict[to_ip]
+                to_url_list = ip_url_list_dict[to_ip]
                 for to in to_url_list:
                     if to in id2url_list:
                         from_ip_edge_list.append(url2id[from_url])
                         to_ip_edge_list.append(url2id[to])
         else:
-            to_url_list = ip_urllist_dict[to_ip_list]
+            to_url_list = ip_url_list_dict[to_ip_list]
             for to in to_url_list:
                 if to in id2url_list:
                     from_ip_edge_list.append(url2id[from_url])
@@ -305,8 +312,12 @@ def load_url(remove_self_loop):
             ('url', 'ip', 'url'): (from_ip_edge_list, to_ip_edge_list)
         }
     )
+    # 存储hg 是因为处理邻接关系太慢了
     save_graphs("/data/hg.bin", hg)
     hg = load_graphs("data/hg.bin")[0][0]
+
+
+    # 处理feature特征
     b_url_feature = b_url_feature.rename(columns={'b_url': 'url'})
     p_url_feature = p_url_feature.rename(columns={'p_url': 'url'})
     url_feature = pd.concat([b_url_feature, p_url_feature], axis=0)
@@ -314,6 +325,8 @@ def load_url(remove_self_loop):
     url_feature['feat'] = url_feature.iloc[:, 1:-2].values.tolist()
     url_feature = pd.DataFrame(url_feature, columns=['url_token', 'feat', 'label']).reindex()
     features = torch.FloatTensor(url_feature['feat'].values.tolist())
+
+    # label 为 -1 报错,必须转为0
     url_feature[url_feature['label'] == -1] = 0
     labels = torch.LongTensor(url_feature['label'].values)
     nids = torch.LongTensor(url_feature['url_token'].values)

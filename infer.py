@@ -18,7 +18,9 @@ p_url_set = pd.read_csv("data/phishing/phishing_merge_url.csv")['p_url'].values.
 
 filter = b_url_set + p_url_set
 
+
 def update_graph(url: str, related: list, type='alink'):
+    # backup 是已有的数据的邻接关系,得到最新的信息,做增量处理
     hg = load_graphs("data/backup/hg.bin")[0][0]
     with open('data/backup/id2url_map.pkl', 'rb') as f:
         id2url = pickle.load(f)
@@ -61,6 +63,8 @@ def inference(args, url, feat, num_classes=2):
 
     with open('data/url2id_map.pkl', 'rb') as f:
         url2id = pickle.load(f)
+
+    # 此处和util没太大区别,只是infer代码为了增量处理
 
     _, _, _, b_url_feature = load_label_url('benign')
     _, _, _, p_url_feature = load_label_url('phishing')

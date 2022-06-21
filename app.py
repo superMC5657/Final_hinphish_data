@@ -3,6 +3,7 @@
 # !@author: superMC @email: 18758266469@163.com
 # !@fileName: app.py
 import argparse
+import re
 
 import flask
 import pandas as pd
@@ -22,13 +23,15 @@ ip_url_list_dict: dict = load_dict("data/ip_url_dict.json")
 alink_url_list_dict: dict = load_dict("data/alink_url_dict.json")
 
 
-def pre_test(url, domains):
+def pre_test(url):
+    u_domain = re.findall(r"://([^/]+)/?", url)[0]
+    if "www." in u_domain:
+        u_domain = u_domain[4:]
+    print("u_domain", u_domain)
     if url in blacklistDf:
         return "phishing"
-
-    for domain in domains:
-        if domain in whitelistDf:
-            return "safe"
+    if u_domain in whitelistDf:
+        return "safe"
     else:
         return "unknown"
 
@@ -51,20 +54,22 @@ args = getArgs()
 def post():
     print("处理中")
     url = request.form.get("url")
-    domains = parse_alink(url)
-    print("domains:", domains)
-    print(url)
-    res = pre_test(url, domains)
+    print("url", url)
+    res = pre_test(url)
     if res == "safe":
         print("safe")
         return "safe"
     elif res == "phishing":
         print("phishing")
         return "phishing"
+
+
     else:
         ## 获取url的边信息
+        domains = parse_alink(url)
+        print("domains:", domains)
         ip = parse_ip(url)
-        print(ip)
+        print("ip:", ip)
         # domain_url_list = parse_url_domain(domains)
         if ip == "":
             ip_url_list = []
